@@ -9,6 +9,7 @@
         }
 
         textarea {
+            margin-top: 20px;
             font-family: "Times New Roman", '楷体';
             font-size: 30px;
             width: 100%; /*自动适应父布局宽度*/
@@ -19,11 +20,28 @@
         #the_input {
             color: blue;
         }
+
+        button {
+            padding: 2px 20px;
+            font-size: 18px;
+            background-color: darkgoldenrod;
+            color: green;
+        }
+
+        #state
+        {
+            font-style: italic;
+            margin-left: 30px;
+            padding: 0px;
+            font-size: 24px;
+        }
     </style>
 </head>
 <body>
-<h1>将粘贴的文本清除换行符并自动复制，5秒钟后清空内容，适用与pdf、word等多行文本的处理</h1>
-<textarea id='the_input' rows="12" onkeyup="Clear()"></textarea>
+<h1>将粘贴的文本清除换行符并自动复制，5秒钟后清空内容，如果无效请尝试点击操作或手工运行！</h1>
+<button onclick="Clear()">手工运行</button>
+<span id="state">请粘贴文本，建议用快捷键（Ctrl + V）</span>
+<textarea id='the_input' rows="12" onclick="Clear()" onkeyup="Clear()"></textarea>
 <script>
     var timer = null;
 
@@ -45,7 +63,8 @@
     function copyContent() {
         var content = document.getElementById("the_input");
         content.select(); // 选择对象
-        document.execCommand("Copy"); // 执行浏览器复制命令
+        document.execCommand("Copy", false, null); // 执行浏览器复制命令
+        document.getElementById("state").innerHTML = '处理后的文本已经复制成功';
     }
 
     function clearContent() {
@@ -54,7 +73,12 @@
         }
 
         copyContent();
-        timer = window.setTimeout('document.getElementById("the_input").value = \'\';', 5000);
+        timer = window.setTimeout(modify, 5000);
+    }
+
+    function modify() {
+        document.getElementById("the_input").value = '';
+        document.getElementById("state").innerHTML = '请粘贴文本，建议用快捷键（Ctrl + V）';
     }
 </script>
 
