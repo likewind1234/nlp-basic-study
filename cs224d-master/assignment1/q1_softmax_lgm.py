@@ -22,10 +22,18 @@ def softmax(x):
     written assignment!
     """
     ### YOUR CODE HERE
-    log_c = np.max(x, axis=x.ndim - 1, keepdims=True)
-    #for numerical stability
-    y = np.sum(np.exp(x - log_c), axis=x.ndim - 1, keepdims=True)
-    x = np.exp(x - log_c)/y
+    if len(x.shape) > 1:
+        tmp = np.max(x, axis = 1)
+        x -= tmp.reshape((x.shape[0], 1))
+        x = np.exp(x)
+        tmp = np.sum(x, axis = 1)
+        x /= tmp.reshape((x.shape[0], 1))
+    else:
+        tmp = np.max(x)
+        x -= tmp
+        x = np.exp(x)
+        tmp = np.sum(x)
+        x /= tmp
     ### END YOUR CODE
     return x
 

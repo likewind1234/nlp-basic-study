@@ -4,6 +4,28 @@ from basic_python.basictools import pause
 from scipy.misc import imread, imsave, imresize
 import matplotlib.pyplot as plt
 
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Study Meshgrid function: Getting a grid with x and y.
+#%matplotlib inline
+m, n = (5, 3)
+x = np.linspace(0, 1, m)
+y = np.linspace(0, 1, n)
+X, Y = np.meshgrid(x,y)
+
+
+print(x)
+#out:
+#array([ 0. , 0.25, 0.5 , 0.75, 1. ])
+print(y)
+#out:
+#array([ 0. , 0.5, 1. ])
+
+
+plt.plot(X, Y, marker='.', color='blue', linestyle='none')
+plt.show()
+pause()
 img = imread('cat.jpg')
 img_tinted = img * [1, 0.7, 0.9]
 

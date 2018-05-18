@@ -10,7 +10,7 @@ def pause():
 
     switch = switch + 1
     print("====================================================")
-    input("Press any key to continue...")
+    input("Press Enter key to continue...")
 
 
 # if __name__ == "__main__":

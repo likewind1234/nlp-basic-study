@@ -2,17 +2,19 @@ __author__ = 'm.bashari'
 import numpy as np
 from sklearn import datasets, linear_model
 import matplotlib.pyplot as plt
+from basic_python.basictools import pause
 
 
 def generate_data():
-    np.random.seed(0)
+    np.random.seed(1)
     X, y = datasets.make_moons(200, noise=0.20)
+
     return X, y
 
 
 def visualize(X, y, clf):
-    # plt.scatter(X[:, 0], X[:, 1], s=40, c=y, cmap=plt.cm.Spectral)
-    # plt.show()
+    plt.scatter(X[:, 0], X[:, 1], s=40, c=y, cmap=plt.cm.Spectral)
+    plt.show()
     plot_decision_boundary(lambda x: clf.predict(x), X, y)
     plt.title("Logistic Regression")
 
@@ -31,6 +33,7 @@ def plot_decision_boundary(pred_func, X, y):
     plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral)
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Spectral)
     plt.show()
+    pause()
 
 
 def classify(X, y):
@@ -41,7 +44,6 @@ def classify(X, y):
 
 def main():
     X, y = generate_data()
-    # visualize(X, y)
     clf = classify(X, y)
     visualize(X, y, clf)
 
