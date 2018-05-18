@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_nlp-basic-study" default="compile.module.nlp-basic-study">
+  <dirname property="module.nlp-basic-study.basedir" file="${ant.file.module_nlp-basic-study}"/>
+  
+  <property name="module.jdk.home.nlp-basic-study" value="${jdk.home.python_3.5}"/>
+  <property name="module.jdk.bin.nlp-basic-study" value="${jdk.bin.python_3.5}"/>
+  <property name="module.jdk.classpath.nlp-basic-study" value="jdk.classpath.python_3.5"/>
+  
+  <property name="compiler.args.nlp-basic-study" value="-encoding UTF-8 -source 9 -target 9 ${compiler.args}"/>
+  
+  <property name="nlp-basic-study.output.dir" value="undefined"/>
+  <property name="nlp-basic-study.testoutput.dir" value="undefined"/>
+  
+  <path id="nlp-basic-study.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="nlp-basic-study.module.production.classpath">
+    <path refid="${module.jdk.classpath.nlp-basic-study}"/>
+    <path refid="library.python_3.5_interpreter_library.classpath"/>
+  </path>
+  
+  <path id="nlp-basic-study.runtime.production.module.classpath">
+    <path refid="library.python_3.5_interpreter_library.classpath"/>
+  </path>
+  
+  <path id="nlp-basic-study.module.classpath">
+    <path refid="${module.jdk.classpath.nlp-basic-study}"/>
+    <path refid="library.python_3.5_interpreter_library.classpath"/>
+  </path>
+  
+  <path id="nlp-basic-study.runtime.module.classpath">
+    <path refid="library.python_3.5_interpreter_library.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.nlp-basic-study">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.nlp-basic-study">
+    <patternset refid="excluded.from.module.nlp-basic-study"/>
+  </patternset>
+  
+  
+  <target name="compile.module.nlp-basic-study" depends="compile.module.nlp-basic-study.production,compile.module.nlp-basic-study.tests" description="Compile module nlp-basic-study"/>
+  
+  <target name="compile.module.nlp-basic-study.production" depends="register.custom.compilers" description="Compile module nlp-basic-study; production classes"/>
+  
+  <target name="compile.module.nlp-basic-study.tests" depends="register.custom.compilers,compile.module.nlp-basic-study.production" description="compile module nlp-basic-study; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.nlp-basic-study" description="cleanup module">
+    <delete dir="${nlp-basic-study.output.dir}"/>
+    <delete dir="${nlp-basic-study.testoutput.dir}"/>
+  </target>
+</project>
