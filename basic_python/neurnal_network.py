@@ -4,7 +4,10 @@
 # "pd"偏导，这是个最原始的利用numpy实现的三层网络，参照上述文件，自行修改版本，和利用向量表示的版本（简化）完全对照起来
 
 import numpy as np
+import torch
 
+alpha = 0.5  # 学习率
+num_iter = 2  # 迭代次数
 
 def sigmoid(x):
     """
@@ -23,6 +26,7 @@ def print_(inf, x):
     print("---------------------")
     print("以上是", inf, "的值")
     print()
+    return
 
 
 def sigmoid_derivation(y):
@@ -43,16 +47,13 @@ def create_by_classic():
     # 初始化
     bias = [0.35, 0.60]
     weight = [0.15, 0.2, 0.25, 0.3, 0.4, 0.45, 0.5, 0.55]
-    output_layer_weights = [0.4, 0.45, 0.5, 0.55]
     # 初始值
     i1 = 0.05
     i2 = 0.10
     # 目标值
     target1 = 0.01
     target2 = 0.99
-    alpha = 0.5  # 学习率
-    num_iter = 2  # 迭代次数
-    
+
     for i in range(num_iter):
         # 正向传播
         net_h1 = i1 * weight[1 - 1] + i2 * weight[2 - 1] + bias[0]
@@ -132,14 +133,14 @@ def create_by_classic():
         weight[7 - 1] = weight[7 - 1] - alpha * pd_e_w7
         weight[8 - 1] = weight[8 - 1] - alpha * pd_e_w8
 
+    return
+
 
 def create_by_super():
     """
     这是利用向量和矩阵强大的数学工具简化网络的构建过程，深刻体会到数学的奥妙
     :return:
     """
-    alpha = 0.5  # 设置学习率
-    num_iter = 2  # 迭代次数
     w1_4 = [[0.15, 0.20], [0.25, 0.30]]  # 输出层的权重
     w5_8 = [[0.40, 0.45], [0.50, 0.55]]  # 权重矩阵的维度
     b1 = 0.35
@@ -186,7 +187,88 @@ def create_by_super():
             # pd_e_net_h[i] * np.array(x)才是w1_4的梯度
             w1_4[i] = w1_4[i] - alpha * pd_e_net_h[i] * np.array(x)
 
+    return
+
+
+def create_by_torch():
+    """
+    利用pytorch构建，这个是目前计划中的终极方法，也是最激动人心的方法，可以看到torch的强大
+    :return:
+    """
+    dtype = torch.float
+    device = torch.device("cpu")
+    # device = torch.device("cuda:0") # Uncomment this to run on GPU
+
+    # N is batch size; D_in is input dimension;
+    # H is hidden dimension; D_out is output dimension.
+    w1_4 = [[0.15, 0.20], [0.25, 0.30]]  # 输出层的权重
+    w5_8 = [[0.40, 0.45], [0.50, 0.55]]  # 权重矩阵的维度
+    b1 = 0.35
+    b2 = 0.60
+
+    x = [0.05, 0.10]  # 初始化输入
+    y = [0.01, 0.99]  # 初始化对应的输出label
+
+    # Create random Tensors to hold input and outputs.
+    # Setting requires_grad=False indicates that we do not need to compute gradients
+    # with respect to these Tensors during the backward pass.
+    x = torch.tensor(x, device=device, dtype=dtype)
+    y = torch.tensor(y, device=device, dtype=dtype)
+
+    # Create weight Tensors for Numpy.
+    # Setting requires_grad=True indicates that we want to compute gradients with
+    # respect to these Tensors during the backward pass.
+    w1_4 = torch.tensor(w1_4, device=device, dtype=dtype, requires_grad=True)
+    w5_8 = torch.tensor(w5_8, device=device, dtype=dtype, requires_grad=True)
+
+    for n in range(num_iter):
+        # Forward pass: compute predicted y using operations on Tensors; these
+        # are exactly the same operations we used to compute the forward pass using
+        # Tensors, but we do not need to keep references to intermediate values since
+        # we are not implementing the backward pass by hand.
+        # 正向传播
+        net_h = x.dot(w1_4) + b1
+        out_h = sigmoid(net_h)  # 激活函数，第一层激励值
+
+        net_o = out_h.dot(w5_8) + b2
+        out_o = sigmoid(net_o)  # 第二层激励值
+        # 计算损失，使用代价函数E = 1/(2)*sum[y-out_o]^2
+        E = 0.5 * torch.square(y - out_o).sum()
+        # 输出迭代后的预测值
+        print(str(n) + "：result: " + str(out_o[0]) + ",result: " + str(out_o[1]))
+        # 输出误差，可以通过改变迭代次数来查看效果
+        print(str(n) + "：error: " + str(E))
+
+        if n == num_iter - 1:
+            print("latest result ：" + str(out_o[0]) + ",result: " + str(out_o[1]))
+            weight1_4 = torch.reshape(torch.transpose(w1_4), 4, -1)
+            weight5_8 = torch.reshape(torch.transpose(w5_8), 4, -1)
+            print_("weight：", (torch.concatenate([weight1_4, weight5_8], axis=0).reshape(-1)).tolist())
+        # Use autograd to compute the backward pass. This call will compute the
+        # gradient of loss with respect to all Tensors with requires_grad=True.
+        # After this call w1.grad and w2.grad will be Tensors holding the gradient
+        # of the loss with respect to w1 and w2 respectively.
+        E.backward()
+
+        # Manually update weights using gradient descent. Wrap in torch.no_grad()
+        # because weights have requires_grad=True, but we don't need to track this
+        # in autograd.
+        # An alternative way is to operate on weight.data and weight.grad.data.
+        # Recall that tensor.data gives a tensor that shares the storage with
+        # tensor, but doesn't track history.
+        # You can also use torch.optim.SGD to achieve this.
+        # with torch.no_grad():
+            # w1 -= learning_rate * w1.grad
+            # w2 -= learning_rate * w2.grad
+            #
+            # # Manually zero the gradients after updating weights
+            # w1.grad.zero_()
+            # w2.grad.zero_()
+
+    return
+
 
 if __name__ == '__main__':
     create_by_classic()
     create_by_super()
+    create_by_torch()
