@@ -2,9 +2,15 @@ global switch
 switch = 0
 print("====================================================")
 
-def pause():
+
+def pause(isOneByOne = False):
+    '''
+    控制运行模式，分割程序段。
+    :param isOneByOne:True：强行分段
+    :return:
+    '''
     global switch
-    if switch >= 1:
+    if (isOneByOne == False and switch >= 1):
         print("-----------------------------------------------------")
         return
 
