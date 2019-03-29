@@ -2,27 +2,48 @@
 # -*- coding: utf-8 -*-
 # https://blog.csdn.net/zhouhailin1007/article/details/84102028
 # "pd"偏导，这是个最原始的利用numpy实现的三层网络，参照上述文件，自行修改版本，和利用向量表示的版本（简化）完全对照起来
-
 import numpy as np
 import torch
+import datetime
 
 alpha = 0.5  # 学习率
-num_iter = 2  # 迭代次数
+num_iter = 100000  # 迭代次数
+
 
 def sigmoid(x):
     """
-    激活函数
+    numpy激活函数
     """
     return 1 / (1 + np.exp(-x))
 
 
+def sigmoid_torch(x):
+    """
+    torch激活函数
+    """
+    return 1 / (1 + torch.exp(-x))
+
+
 def print_(inf, x):
     """
-    计算激活函数的偏微分
+    打印x
     """
     print(inf, "的值为：")
     print("---------------------")
     print(x)
+    print("---------------------")
+    print("以上是", inf, "的值")
+    print()
+    return
+
+
+def print_torch(inf, x):
+    """
+    简洁打印torch
+    """
+    print(inf, "的值为：")
+    print("---------------------")
+    print(x.tolist())
     print("---------------------")
     print("以上是", inf, "的值")
     print()
@@ -44,6 +65,7 @@ def create_by_classic():
     https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
     :return: 
     """
+    starttime = datetime.datetime.now()
     # 初始化
     bias = [0.35, 0.60]
     weight = [0.15, 0.2, 0.25, 0.3, 0.4, 0.45, 0.5, 0.55]
@@ -64,14 +86,16 @@ def create_by_classic():
         net_o2 = out_h1 * weight[7 - 1] + out_h2 * weight[8 - 1] + bias[1]
         out_o1 = sigmoid(net_o1)
         out_o2 = sigmoid(net_o2)
-        # 输出迭代后的预测值
-        print(str(i) + "：result: " + str(out_o1) + ",result: " + str(out_o2))
-        # 输出误差，可以通过改变迭代次数来查看效果
-        print(str(i) + "：error: " + str(0.5 * (np.square(target1 - out_o1) + np.square(target2 - out_o2))))
+        # # 输出迭代后的预测值
+        # print(str(i) + "：result: " + str(out_o1) + ",result: " + str(out_o2))
+        # # 输出误差，可以通过改变迭代次数来查看效果
+        # print(str(i) + "：error: " + str(0.5 * (np.square(target1 - out_o1) + np.square(target2 - out_o2))))
 
         if i == num_iter - 1:
             print("latest result ：" + str(out_o1) + ",result: " + str(out_o2))
             print_("weight：", weight)
+            endtime = datetime.datetime.now()
+            print("create_by_classic 执行时间", endtime - starttime)
 
         # 反向传播0.75136507 0.77292847
         # 计算w5-w8（输出层权重）的误差
@@ -141,6 +165,7 @@ def create_by_super():
     这是利用向量和矩阵强大的数学工具简化网络的构建过程，深刻体会到数学的奥妙
     :return:
     """
+    starttime = datetime.datetime.now()
     w1_4 = [[0.15, 0.20], [0.25, 0.30]]  # 输出层的权重
     w5_8 = [[0.40, 0.45], [0.50, 0.55]]  # 权重矩阵的维度
     b1 = 0.35
@@ -156,17 +181,19 @@ def create_by_super():
         net_o = np.dot(w5_8, out_h) + b2
         out_o = sigmoid(net_o)  # 第二层激励值
         # 计算损失，使用代价函数E = 1/(2)*sum[y-out_o]^2
-        E = 0.5 * np.square(y - out_o).sum()
-        # 输出迭代后的预测值
-        print(str(n) + "：result: " + str(out_o[0]) + ",result: " + str(out_o[1]))
-        # 输出误差，可以通过改变迭代次数来查看效果
-        print(str(n) + "：error: " + str(E))
+        loss = 0.5 * np.square(y - out_o).sum()
+        # # 输出迭代后的预测值
+        # print(str(n) + "：result: " + str(out_o[0]) + ",result: " + str(out_o[1]))
+        # # 输出误差，可以通过改变迭代次数来查看效果
+        # print(str(n) + "：error: " + str(loss))
 
         if n == num_iter - 1:
             print("latest result ：" + str(out_o[0]) + ",result: " + str(out_o[1]))
             weight1_4 = np.reshape(np.transpose(w1_4), 4, -1)
             weight5_8 = np.reshape(np.transpose(w5_8), 4, -1)
             print_("weight：", (np.concatenate([weight1_4, weight5_8], axis=0).reshape(-1)).tolist())
+            endtime = datetime.datetime.now()
+            print("create_by_super 执行时间", endtime - starttime)
 
         # multiply只是将对应位置相乘即可，就是简单的组团运算（简单的运算通过向量的线性（一对一的）表达）
         # 通过链式规则解决了最后一层的求导 dp_e_(包含两个值）对应的是
@@ -195,80 +222,54 @@ def create_by_torch():
     利用pytorch构建，这个是目前计划中的终极方法，也是最激动人心的方法，可以看到torch的强大
     :return:
     """
-    dtype = torch.float
+    starttime = datetime.datetime.now()
+
+    dtype = torch.double
     device = torch.device("cpu")
     # device = torch.device("cuda:0") # Uncomment this to run on GPU
+    x = torch.tensor([[0.05], [0.10]], device=device, dtype=dtype)  # 初始化输入
+    y = torch.tensor([[0.01], [0.99]], device=device, dtype=dtype)  # 初始化对应的输出label
+    w1_4 = torch.tensor([[0.15, 0.20], [0.25, 0.30]], device=device, dtype=dtype, requires_grad=True)  # 输出层的权重
+    w5_8 = torch.tensor([[0.40, 0.45], [0.50, 0.55]], device=device, dtype=dtype, requires_grad=True)  # 权重矩阵的维度
 
-    # N is batch size; D_in is input dimension;
-    # H is hidden dimension; D_out is output dimension.
-    w1_4 = [[0.15, 0.20], [0.25, 0.30]]  # 输出层的权重
-    w5_8 = [[0.40, 0.45], [0.50, 0.55]]  # 权重矩阵的维度
     b1 = 0.35
     b2 = 0.60
 
-    x = [0.05, 0.10]  # 初始化输入
-    y = [0.01, 0.99]  # 初始化对应的输出label
-
-    # Create random Tensors to hold input and outputs.
-    # Setting requires_grad=False indicates that we do not need to compute gradients
-    # with respect to these Tensors during the backward pass.
-    x = torch.tensor(x, device=device, dtype=dtype)
-    y = torch.tensor(y, device=device, dtype=dtype)
-
-    # Create weight Tensors for Numpy.
-    # Setting requires_grad=True indicates that we want to compute gradients with
-    # respect to these Tensors during the backward pass.
-    w1_4 = torch.tensor(w1_4, device=device, dtype=dtype, requires_grad=True)
-    w5_8 = torch.tensor(w5_8, device=device, dtype=dtype, requires_grad=True)
-
     for n in range(num_iter):
-        # Forward pass: compute predicted y using operations on Tensors; these
-        # are exactly the same operations we used to compute the forward pass using
-        # Tensors, but we do not need to keep references to intermediate values since
-        # we are not implementing the backward pass by hand.
         # 正向传播
-        net_h = x.dot(w1_4) + b1
-        out_h = sigmoid(net_h)  # 激活函数，第一层激励值
-
-        net_o = out_h.dot(w5_8) + b2
-        out_o = sigmoid(net_o)  # 第二层激励值
+        net_h = w1_4.mm(x) + b1
+        out_h = sigmoid_torch(net_h)  # 激活函数，第一层激励值
+        net_o = w5_8.mm(out_h) + b2
+        out_o = sigmoid_torch(net_o)  # 第二层激励值
         # 计算损失，使用代价函数E = 1/(2)*sum[y-out_o]^2
-        E = 0.5 * torch.square(y - out_o).sum()
-        # 输出迭代后的预测值
-        print(str(n) + "：result: " + str(out_o[0]) + ",result: " + str(out_o[1]))
-        # 输出误差，可以通过改变迭代次数来查看效果
-        print(str(n) + "：error: " + str(E))
+        loss = 0.5 * torch.pow(y - out_o, 2).sum()
+        # # 输出迭代后的预测值
+        # print(str(n) + "：result:{}".format(out_o.tolist()))
+        # # 输出误差，可以通过改变迭代次数来查看效果
+        # print(str(n) + "：error: {}" .format(loss.tolist()))
 
         if n == num_iter - 1:
-            print("latest result ：" + str(out_o[0]) + ",result: " + str(out_o[1]))
-            weight1_4 = torch.reshape(torch.transpose(w1_4), 4, -1)
-            weight5_8 = torch.reshape(torch.transpose(w5_8), 4, -1)
-            print_("weight：", (torch.concatenate([weight1_4, weight5_8], axis=0).reshape(-1)).tolist())
-        # Use autograd to compute the backward pass. This call will compute the
-        # gradient of loss with respect to all Tensors with requires_grad=True.
-        # After this call w1.grad and w2.grad will be Tensors holding the gradient
-        # of the loss with respect to w1 and w2 respectively.
-        E.backward()
+            print("latest result ：{}".format(out_o.tolist()))
+            weight1_4 = torch.reshape(w1_4, [4, -1])
+            weight5_8 = torch.reshape(w5_8, [4, -1])
+            print_("weight：", (torch.cat([weight1_4, weight5_8]).reshape(-1)).tolist())
+            endtime = datetime.datetime.now()
+            print("create_by_torch执行时间", endtime - starttime)
+        # 利用自动微分，太神奇了，连微分都不用算了！我的天哪~~
+        loss.backward()
 
-        # Manually update weights using gradient descent. Wrap in torch.no_grad()
-        # because weights have requires_grad=True, but we don't need to track this
-        # in autograd.
-        # An alternative way is to operate on weight.data and weight.grad.data.
-        # Recall that tensor.data gives a tensor that shares the storage with
-        # tensor, but doesn't track history.
-        # You can also use torch.optim.SGD to achieve this.
-        # with torch.no_grad():
-            # w1 -= learning_rate * w1.grad
-            # w2 -= learning_rate * w2.grad
-            #
-            # # Manually zero the gradients after updating weights
-            # w1.grad.zero_()
-            # w2.grad.zero_()
+        with torch.no_grad():
+            w5_8 -= alpha * w5_8.grad
+            w1_4 -= alpha * w1_4.grad
+
+            # Manually zero the gradients after updating weights
+            w1_4.grad.zero_()
+            w5_8.grad.zero_()
 
     return
 
 
 if __name__ == '__main__':
-    create_by_classic()
-    create_by_super()
     create_by_torch()
+    create_by_super()
+    create_by_classic()
